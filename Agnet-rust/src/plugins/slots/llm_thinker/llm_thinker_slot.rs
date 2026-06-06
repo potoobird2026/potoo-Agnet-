@@ -15,10 +15,10 @@ use crate::core::slot::{SlotDirective, SlotPlugin};
 use crate::core::types::error::PluginError;
 use crate::core::types::plugin::PluginInitContext;
 use crate::core::types::Timestamp;
+use crate::shared_types::context::{CONTEXT_THOUGHT, CONTEXT_TOOLS};
 use crate::shared_types::llm::{
     ChatResponse, LlmConfig, LlmContract, LlmError, StreamEvent, PROVIDER_LLM,
 };
-use crate::shared_types::context::{CONTEXT_THOUGHT, CONTEXT_TOOLS};
 use crate::shared_types::DynProvider;
 use crate::shared_types::{Message, Thought, ToolDefinition};
 
@@ -88,7 +88,9 @@ impl LlmThinkerSlot {
     fn merge_session_overrides(&self, ap: &dyn SlotAccessPoint) -> LlmConfig {
         let mut config = self.llm_config.clone().unwrap_or_default();
 
-        if let Some(session_raw) = ap.provider_raw("session-context") {
+        if let Some(session_raw) =
+            ap.provider_raw(crate::shared_types::context::PROVIDER_SESSION_CONTEXT)
+        {
             if let Some(overrides) = session_raw.downcast_ref::<serde_json::Value>() {
                 if let Ok(patched) = serde_json::from_value::<LlmConfig>(overrides.clone()) {
                     if !patched.model.is_empty() {
@@ -291,6 +293,10 @@ mod tests {
 
         fn provider_raw(&self, name: &str) -> Option<Arc<dyn Any + Send + Sync>> {
             self.providers.get(name).cloned()
+        }
+
+        fn append_message(&mut self, _msg: Message) -> Result<(), PluginError> {
+            Ok(())
         }
     }
 

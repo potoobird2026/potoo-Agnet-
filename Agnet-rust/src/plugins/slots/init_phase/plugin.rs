@@ -5,7 +5,10 @@ use crate::core::slot::{SlotDirective, SlotPlugin};
 use crate::core::types::error::PluginError;
 use crate::core::types::plugin::{AgentConfig, PluginInitContext};
 use crate::core::types::Timestamp;
-use crate::shared_types::context::{CONTEXT_AGENT_CONFIG, CONTEXT_IDENTITY, CONTEXT_SESSION_META, CONTEXT_SYSTEM_PROMPT, CONTEXT_WORKING_MEMORY};
+use crate::shared_types::context::{
+    CONTEXT_AGENT_CONFIG, CONTEXT_IDENTITY, CONTEXT_SESSION_META, CONTEXT_SYSTEM_PROMPT,
+    CONTEXT_WORKING_MEMORY,
+};
 use crate::shared_types::{DynProvider, MemoryProvider, PROVIDER_MEMORY};
 
 use super::config::InitPhaseConfig;
@@ -154,7 +157,8 @@ impl SlotPlugin for InitPhaseSlot {
             {
                 Ok(memories) => {
                     tracing::debug!("init_phase: 加载 {} 条工作记忆", memories.len());
-                    if let Err(e) = ap.write_context_raw(CONTEXT_WORKING_MEMORY, Box::new(memories)) {
+                    if let Err(e) = ap.write_context_raw(CONTEXT_WORKING_MEMORY, Box::new(memories))
+                    {
                         tracing::warn!("init_phase: 写入 working_memory 失败: {}，跳过", e);
                     }
                 }
@@ -167,7 +171,7 @@ impl SlotPlugin for InitPhaseSlot {
         // 步骤 5：组装系统提示词
         if config.assemble_system_prompt {
             let identity_data = ap
-.read_context_raw(CONTEXT_IDENTITY)
+                .read_context_raw(CONTEXT_IDENTITY)
                 .and_then(|any| any.downcast_ref::<crate::shared_types::IdentitySection>())
                 .cloned();
 
@@ -436,6 +440,10 @@ mod tests {
 
         fn provider_raw(&self, _name: &str) -> Option<Arc<dyn Any + Send + Sync>> {
             self.provider_raw_override.clone()
+        }
+
+        fn append_message(&mut self, _msg: Message) -> Result<(), PluginError> {
+            Ok(())
         }
     }
 

@@ -64,11 +64,12 @@ impl StdioMcpConnector {
                     first_err
                 );
                 // 超时已在外层处理，此处只做重试间隔（+ jitter）
-                let jitter_ms = 150 + (std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_nanos() as u64
-                    % 101);
+                let jitter_ms = 150
+                    + (std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_nanos() as u64
+                        % 101);
                 tokio::time::sleep(Duration::from_millis(jitter_ms)).await;
                 self.try_connect().await.map_err(|retry_err| {
                     tracing::error!(

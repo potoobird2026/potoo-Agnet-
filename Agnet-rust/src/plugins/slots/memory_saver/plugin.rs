@@ -7,7 +7,10 @@ use crate::core::slot::{SlotDirective, SlotPlugin};
 use crate::core::types::error::PluginError;
 use crate::core::types::plugin::PluginInitContext;
 use crate::core::types::Timestamp;
-use crate::shared_types::context::{CONTEXT_LAST_INDEXED_COUNT, CONTEXT_LAST_PERSISTED_COUNT, CONTEXT_MEMORY_PERSISTED, CONTEXT_OBSERVATION};
+use crate::shared_types::context::{
+    CONTEXT_LAST_INDEXED_COUNT, CONTEXT_LAST_PERSISTED_COUNT, CONTEXT_MEMORY_PERSISTED,
+    CONTEXT_OBSERVATION,
+};
 use crate::shared_types::{DynProvider, MemoryProvider, Message, Observation, PROVIDER_MEMORY};
 
 use super::config::*;
@@ -145,17 +148,10 @@ impl SlotPlugin for MemorySaverSlot {
                                 );
                             }
                             Ok(Err(e2)) => {
-                                tracing::error!(
-                                    "{} 消息持久化重试仍失败: {}",
-                                    LOG_PREFIX,
-                                    e2
-                                );
+                                tracing::error!("{} 消息持久化重试仍失败: {}", LOG_PREFIX, e2);
                             }
                             Err(_) => {
-                                tracing::warn!(
-                                    "{} 消息持久化重试超时",
-                                    LOG_PREFIX,
-                                );
+                                tracing::warn!("{} 消息持久化重试超时", LOG_PREFIX,);
                             }
                         }
                     }
@@ -197,7 +193,8 @@ impl SlotPlugin for MemorySaverSlot {
                                 tracing::error!("{} 观察结果持久化失败，重试中: {}", LOG_PREFIX, e);
                                 match tokio::time::timeout(
                                     timeout,
-                                    memory_provider.persist_observation(&session_id, &observation_str),
+                                    memory_provider
+                                        .persist_observation(&session_id, &observation_str),
                                 )
                                 .await
                                 {
@@ -212,10 +209,7 @@ impl SlotPlugin for MemorySaverSlot {
                                         );
                                     }
                                     Err(_) => {
-                                        tracing::warn!(
-                                            "{} 观察结果重试超时",
-                                            LOG_PREFIX,
-                                        );
+                                        tracing::warn!("{} 观察结果重试超时", LOG_PREFIX,);
                                     }
                                 }
                             }
@@ -473,6 +467,9 @@ mod tests {
             } else {
                 None
             }
+        }
+        fn append_message(&mut self, _msg: Message) -> Result<(), PluginError> {
+            Ok(())
         }
     }
 
@@ -829,6 +826,10 @@ mod tests {
                 } else {
                     None
                 }
+            }
+
+            fn append_message(&mut self, _msg: Message) -> Result<(), PluginError> {
+                Ok(())
             }
         }
 

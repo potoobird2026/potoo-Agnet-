@@ -1,4 +1,4 @@
-/*!
+﻿/*!
  * core/access —— 接入协议
  *
  * SlotAccessPoint     —— Slot 插件与核心交互的受控通道
@@ -123,6 +123,9 @@ pub trait SlotAccessPoint: Send + Sync {
 
     /// 读取当前会话对话历史（只读）
     fn messages(&self) -> &[Message];
+
+    /// 追加一条消息到对话历史（需要 messages:append 权限）
+    fn append_message(&mut self, msg: Message) -> Result<(), PluginError>;
 
     /// 当前 Session ID
     fn session_id(&self) -> &str;

@@ -54,7 +54,7 @@ impl ServiceAccessImpl for MockServiceAccess {
 
 /// 工具：把 mock server 路径解析为字符串
 fn mock_server_path() -> String {
-    env!("CARGO_BIN_EXE_mcp_mock_server").to_string()
+    std::env::var("CARGO_BIN_EXE_mcp_mock_server").unwrap_or_default()
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

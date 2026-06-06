@@ -130,9 +130,9 @@ fn build_openai_headers(config: &LlmConfig) -> reqwest::header::HeaderMap {
 
     // 认证方式: 显式 auth_mode → executor 默认 (Bearer)
     let auth_mode = config.auth_mode.unwrap_or(AuthMode::Bearer);
-    let extra_overrides_auth = config.extra_headers.iter().any(|(k, _)|
+    let extra_overrides_auth = config.extra_headers.iter().any(|(k, _)| {
         k.eq_ignore_ascii_case("authorization") || k.eq_ignore_ascii_case("x-api-key")
-    );
+    });
 
     if !extra_overrides_auth {
         match auth_mode {
@@ -151,8 +151,7 @@ fn build_openai_headers(config: &LlmConfig) -> reqwest::header::HeaderMap {
                 if let Some(ref key) = config.api_key {
                     headers.insert(
                         "x-api-key",
-                        key.parse()
-                            .expect("api_key is a valid header value"),
+                        key.parse().expect("api_key is a valid header value"),
                     );
                 }
             }

@@ -55,6 +55,9 @@ pub trait SlotAccessPoint {
     fn session_id(&self) -> &str;
     fn phase_name(&self) -> &str;
     fn current_iteration(&self) -> usize;
+    /// 追加一条消息到对话历史
+    fn append_message(&mut self, msg: Message) -> Result<(), PluginError>;
+
     /// 写入观察结果（类型擦除，由 Slot 自行装箱具体 Observation 类型）
     fn write_observation(&mut self, obs: Box<dyn Any + Send>) -> Result<(), PluginError>;
 
@@ -167,6 +170,7 @@ requires:
 | 权限 tag | 对应方法 | 说明 |
 |---------|---------|------|
 | `messages:read` | `messages()` | 读取对话历史 |
+| `messages:append` | `append_message()` | 追加一条消息到对话历史（v3 新增） |
 | `observation:write` | `write_observation()` | 写入工具观察结果 |
 | `context:read` | `read_context_raw()` | 读取 StepContext 数据 |
 | `context:write` | `write_context_raw()` | 写入 StepContext 数据 |
@@ -203,6 +207,9 @@ PluginLoader 读元数据 → 校验依赖与权限
 ```
 
 - `init`：只调用一次，失败则插件不被加载（红线 S-R02）
+  - **调用方**：`init()` 由主程序（通常是 `AgentRuntime::register_slot()`）在将 Slot 注册到 Pipeline 之前自动调用。
+    本框架的 `AgentRuntime::register_slot()` 封装了 `init()` + `add_slot_mut()` 两步，防止遗忘调用 init()。
+  - **不兼容行为**：如果 `init()` 未被调用而 `run()` 被触发，Slot 应当以 `PluginError::Runtime` 报错，不得以退化模式运行。
 - `run`：每次 Phase 触发时调用，通过 `SlotAccessPoint` 与外界交互
 - `shutdown`：只调用一次，用于资源清理
 

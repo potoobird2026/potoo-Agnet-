@@ -42,3 +42,6 @@ pub const CONTEXT_AGENT_CONFIG: &str = "agent_config_info";
 
 // ── StepContext.write_observation() 内部键 ────────────────────
 pub const CONTEXT_OBSERVATION_INTERNAL: &str = "__observation";
+
+// ── LlmThinkerSlot (K-R01 fix) ────────────────────────────
+pub const PROVIDER_SESSION_CONTEXT: &str = "session-context";

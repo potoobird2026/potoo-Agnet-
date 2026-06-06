@@ -87,6 +87,8 @@ mod tests {
     use std::sync::Arc;
 
     use super::*;
+    use crate::shared_types::Message;
+
     use crate::core::access::SlotAccessPoint;
     use crate::core::types::error::PluginError;
 
@@ -165,6 +167,10 @@ mod tests {
         }
         fn provider_raw(&self, _: &str) -> Option<Arc<dyn Any + Send + Sync>> {
             None
+        }
+
+        fn append_message(&mut self, _msg: Message) -> Result<(), PluginError> {
+            Ok(())
         }
     }
 

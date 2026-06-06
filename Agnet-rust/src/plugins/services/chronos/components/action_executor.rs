@@ -66,7 +66,11 @@ impl ActionExecutorService for ActionExecutorComponent {
                                         Ok(wrapper) => {
                                             match wrapper
                                                 .0
-                                                .execute(tool_name, tool_args, Duration::from_secs(30))
+                                                .execute(
+                                                    tool_name,
+                                                    tool_args,
+                                                    Duration::from_secs(30),
+                                                )
                                                 .await
                                             {
                                                 Ok(_) => {

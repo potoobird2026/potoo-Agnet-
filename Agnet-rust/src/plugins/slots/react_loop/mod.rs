@@ -142,6 +142,8 @@ mod tests {
     use std::collections::HashMap;
 
     use crate::core::types::plugin::AgentConfig;
+    use crate::shared_types::Message;
+
     use crate::core::types::Timestamp;
     use crate::shared_types::Action;
 
@@ -207,6 +209,10 @@ mod tests {
         }
         fn provider_raw(&self, _name: &str) -> Option<Arc<dyn Any + Send + Sync>> {
             None
+        }
+
+        fn append_message(&mut self, _msg: Message) -> Result<(), PluginError> {
+            Ok(())
         }
     }
 

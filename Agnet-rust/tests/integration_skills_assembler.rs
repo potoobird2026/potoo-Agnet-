@@ -116,6 +116,7 @@ impl ServiceAccessImpl for MockServiceAccess {
     fn provider_raw(&self, name: &str) -> Option<Arc<dyn Any + Send + Sync>> {
         self.providers.lock().unwrap().get(name).cloned()
     }
+
     fn unregister_provider(&self, name: &str) {
         self.providers.lock().unwrap().remove(name);
     }
@@ -174,6 +175,12 @@ impl aagnet::core::access::SlotAccessPoint for MockSlotAccess {
     }
     fn provider_raw(&self, name: &str) -> Option<Arc<dyn Any + Send + Sync>> {
         self.ap.provider_raw(name)
+    }
+    fn append_message(
+        &mut self,
+        _msg: aagnet::shared_types::Message,
+    ) -> Result<(), aagnet::core::types::error::PluginError> {
+        Ok(())
     }
 }
 

@@ -899,16 +899,19 @@ LlmThinkerSlot::run(ap: &mut dyn SlotAccessPoint) -> Result<SlotDirective, SlotE
     │          │   └── None(channel(通道) 关闭) → final_thought = Some(Final{answer}); break
     │          └── thought = final_thought.unwrap_or(Final{answer})
     │
-    ├── 7. 根据 Thought(思考结果) 类型后处理
-    │      ├── Thought::Final { answer, reasoning }:
-    │      │   ├── messages.push(Assistant(助手)角色, answer)
-    │      │   └── 设置 step_result = StepResponse::Done(完成) { answer, reasoning }
-    │      │
-    │      └── Thought::Action { action, reasoning }:
-    │          └── 保持 thought(思考结果)，不修改 messages(消息)
-    │
-    ├── 8. 写入输出
+    ├── 7. 写入输出
     │      ap.write_context_raw("thought", Box::new(thought))
+    │
+    ├── [注] 消息同步由 ThoughtSyncSlot 负责
+    │      LlmThinkerSlot 不再直接操作 messages。
+    │      ThoughtSyncSlot (Phase::think 末尾) 读取 thought，
+    │      构建 Assistant 消息并通过 ap.append_message() 追加到对话历史。
+    │      
+    │      旧流程（v2）:
+    │        LlmThinkerSlot → ap.write_context_raw("thought", boxed_thought)  # 由 ThoughtSyncSlot 同步到 messages
+    │      新流程（v3）:
+    │        LlmThinkerSlot → write_context_raw("thought")
+    │        ThoughtSyncSlot → ap.append_message(assistant_msg)
     │
     └── 9. 返回 SlotDirective::Continue(继续)
 ```
@@ -1003,8 +1006,10 @@ Orchestrator::shutdown_all()
 │  └── ap.provider_raw("session-context")→ SessionCtxProvider   会话覆盖配置       │
 │                                                                                 │
 │  写入:                                                                          │
-│  ├── ap.write_context_raw("thought", ..)    Thought(思考结果)                    │
-│  └── messages().push(assistant_msg)         助手消息（仅 Final(最终答案)时）     │
+│  └── ap.write_context_raw("thought", ..)    Thought(思考结果)                    │
+│                                                                                 │
+│  [消息同步在 Phase::think 末尾由 ThoughtSyncSlot 完成]                            │
+│  ThoughtSyncSlot: ap.append_message(assistant_msg)                             │
 └───────────────────────────────────┬─────────────────────────────────────────────┘
                                     │
                                     ▼
@@ -1100,7 +1105,7 @@ Orchestrator::shutdown_all()
 │  │ Thought(思考结果) 后处理                                                    │  │
 │  │                                                                           │  │
 │  │  if Thought::Final { answer, reasoning }:                                 │  │
-│  │    messages.push(assistant_msg)   ← 追加到对话历史                        │  │
+│  │    ap.write_context_raw("thought", boxed_thought)  # 由 ThoughtSyncSlot 同步到 messages   ← 追加到对话历史                        │  │
 │  │    设置 step_result = Done(answer, reasoning)                              │  │
 │  │                                                                           │  │
 │  │  if Thought::Action { action, reasoning }:                                │  │

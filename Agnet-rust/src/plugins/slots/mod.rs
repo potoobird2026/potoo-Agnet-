@@ -1,9 +1,11 @@
-pub mod assembler;
+﻿pub mod assembler;
 pub mod audit_phase;
 pub mod component;
 pub mod init_phase;
 pub mod llm_thinker;
 pub mod memory_saver;
+pub mod observation_sync;
 pub mod react_loop;
+pub mod thought_sync;
 pub mod tool_executor;
 pub mod tool_registry;

@@ -45,9 +45,9 @@ pub mod chronos;
 pub mod cli;
 pub mod security;
 
-pub use context::*;
 pub use chronos::{ChronosContract, ChronosError, ChronosStatus, PROVIDER_CHRONOS};
 pub use cli::{CliError, CliProvider, PROVIDER_CLI_CHANNEL};
+pub use context::*;
 pub use mcp::McpBundle;
 pub use memory::{
     ExperienceEntry, IdentitySection, MemoryError, MemoryFileEntry, MemoryProvider, MemoryStats,

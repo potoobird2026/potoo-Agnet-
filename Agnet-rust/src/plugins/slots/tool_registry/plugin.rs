@@ -78,6 +78,7 @@ impl SlotPlugin for ToolRegistrySlot {
 
 #[cfg(test)]
 mod tests {
+    use crate::shared_types::Message;
     use std::any::Any;
     use std::collections::HashMap;
     use std::sync::Arc;
@@ -177,6 +178,10 @@ mod tests {
         }
         fn provider_raw(&self, name: &str) -> Option<Arc<dyn Any + Send + Sync>> {
             self.providers.get(name).cloned()
+        }
+
+        fn append_message(&mut self, _msg: Message) -> Result<(), PluginError> {
+            Ok(())
         }
     }
 

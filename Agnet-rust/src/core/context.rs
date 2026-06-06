@@ -1,4 +1,4 @@
-use std::any::Any;
+﻿use std::any::Any;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -114,6 +114,12 @@ impl StepContext {
 impl SlotAccessPoint for StepContext {
     fn messages(&self) -> &[Message] {
         &self.messages
+    }
+
+    fn append_message(&mut self, msg: Message) -> Result<(), PluginError> {
+        self.check_permission("messages:append")?;
+        self.messages.push(msg);
+        Ok(())
     }
 
     fn session_id(&self) -> &str {

@@ -13,7 +13,9 @@ use crate::core::access::SlotAccessPoint;
 use crate::core::slot::{SlotDirective, SlotPlugin};
 use crate::core::types::error::PluginError;
 use crate::core::types::plugin::PluginInitContext;
-use crate::shared_types::context::{CONTEXT_CIRCUIT_BREAKER, CONTEXT_FINAL_ANSWER, CONTEXT_OBSERVATION, CONTEXT_THOUGHT};
+use crate::shared_types::context::{
+    CONTEXT_CIRCUIT_BREAKER, CONTEXT_FINAL_ANSWER, CONTEXT_OBSERVATION, CONTEXT_THOUGHT,
+};
 use crate::shared_types::{
     DynProvider, Observation, Thought, ToolError, ToolProvider, PROVIDER_TOOL,
 };

@@ -70,6 +70,12 @@ pub trait ServiceAccessImpl: Send + Sync {
     // ── Provider 注册 ──
     /// 将本服务的 Provider 注册到运行时，供其他插件通过 `SlotAccessPoint::provider_raw()` 查找
     fn register_provider(&self, name: &str, provider: Arc<dyn Any + Send + Sync>);
+
+    /// 按名称查找 Provider（返回类型擦除的 Arc）
+    fn provider_raw(&self, name: &str) -> Option<Arc<dyn Any + Send + Sync>>;
+
+    /// 反注册 Provider（shutdown 时清理）
+    fn unregister_provider(&self, name: &str);
 }
 ```
 
@@ -79,6 +85,9 @@ pub trait ServiceAccessImpl: Send + Sync {
 |------|------|
 | `get_config()` | 读取 Agent 配置（结构化） |
 | `log()` | 向框架日志系统写入日志 |
+| `register_provider()` | 注册业务 Provider |
+| `provider_raw()` | 按名称查找 Provider |
+| `unregister_provider()` | 反注册 Provider |
 
 ### 2.2 Provider 注册
 

@@ -297,6 +297,10 @@ mod tests {
         fn provider_raw(&self, _: &str) -> Option<Arc<dyn Any + Send + Sync>> {
             None
         }
+
+        fn append_message(&mut self, _msg: Message) -> Result<(), PluginError> {
+            Ok(())
+        }
     }
 
     fn make_ctx() -> PluginInitContext {

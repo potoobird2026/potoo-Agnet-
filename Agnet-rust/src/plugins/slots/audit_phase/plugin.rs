@@ -9,8 +9,10 @@ use crate::plugins::slots::audit_phase::config::{
     AuditPhaseConfig, RiskAction, SensitiveRuleConfig, DEFAULT_AUDIT_LOG_CAPACITY,
 };
 use crate::plugins::slots::audit_phase::types::{AuditEvent, AuditResult};
+use crate::shared_types::context::{
+    CONTEXT_AUDIT_LOG, CONTEXT_AUDIT_RESULT, CONTEXT_AUDIT_WARNINGS, CONTEXT_THOUGHT,
+};
 use crate::shared_types::thought::{Action, Thought};
-use crate::shared_types::context::{CONTEXT_AUDIT_LOG, CONTEXT_AUDIT_RESULT, CONTEXT_AUDIT_WARNINGS, CONTEXT_THOUGHT};
 use crate::shared_types::{
     AuditContext, AuditWarning, DynProvider, RiskSeverity, SecurityDecision,
     SecurityPolicyProvider, PROVIDER_SECURITY,
@@ -320,7 +322,8 @@ impl SlotPlugin for AuditPhaseSlot {
 
         // 步骤 6：写入审计结果（Continue 路径，非关键路径，降级处理）
         if !audit_warnings.is_empty() {
-            if let Err(e) = ap.write_context_raw(CONTEXT_AUDIT_WARNINGS, Box::new(audit_warnings.clone()))
+            if let Err(e) =
+                ap.write_context_raw(CONTEXT_AUDIT_WARNINGS, Box::new(audit_warnings.clone()))
             {
                 tracing::warn!("audit_phase: 写入 audit_warnings 失败: {}，跳过", e);
             }
@@ -365,6 +368,7 @@ impl SlotPlugin for AuditPhaseSlot {
 
 #[cfg(test)]
 mod tests {
+    use crate::shared_types::Message;
     use std::any::Any;
     use std::collections::HashMap;
     use std::sync::Arc;
@@ -474,6 +478,10 @@ mod tests {
             } else {
                 None
             }
+        }
+
+        fn append_message(&mut self, _msg: Message) -> Result<(), PluginError> {
+            Ok(())
         }
     }
 

@@ -24,14 +24,13 @@ impl RetryManager {
 
     /// 添加 ±25% 随机 jitter 避免 thundering herd
     fn add_jitter(delay: Duration, attempt: u32) -> Duration {
-        let nanos = delay.as_nanos() as u128;
+        let nanos = delay.as_nanos();
         if nanos == 0 {
             return delay;
         }
         // 基于 attempt 和 nanos 的简单伪随机：0..=50 百分比
         let seed = (nanos.wrapping_mul(1103515245).wrapping_add(12345)
-            ^ (attempt as u128).wrapping_mul(6364136223846793005))
-            as u64;
+            ^ (attempt as u128).wrapping_mul(6364136223846793005)) as u64;
         let pct = (seed % 51) as f64; // 0..50
         let jitter_factor = 0.75 + (pct / 100.0); // 0.75..1.25
         Duration::from_nanos((nanos as f64 * jitter_factor) as u64)

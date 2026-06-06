@@ -361,11 +361,9 @@ impl AgentRuntime {
     /// 从 StepContext 提取最后一条 assistant 回复
     fn extract_response(ctx: &StepContext) -> String {
         // 优先从 context["thought"] 提取 Final answer
-        if let Some(thought) = ctx.get_context::<Thought>(CONTEXT_THOUGHT) {
-            if let Thought::Final { answer, .. } = thought {
-                if !answer.is_empty() {
-                    return answer.clone();
-                }
+        if let Some(Thought::Final { answer, .. }) = ctx.get_context::<Thought>(CONTEXT_THOUGHT) {
+            if !answer.is_empty() {
+                return answer.clone();
             }
         }
         // 回退：从 messages 中找最后一条 assistant 消息

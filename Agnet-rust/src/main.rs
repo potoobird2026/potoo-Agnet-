@@ -5,7 +5,6 @@ use aagnet::core::{
     StepInput,
 };
 use aagnet::infra::config::ConfigLoader;
-use aagnet::shared_types::llm::LlmConfig;
 use aagnet::plugins::services::chronos::ChronosServicePlugin;
 use aagnet::plugins::services::cli::CliChannel;
 use aagnet::plugins::services::compression::{CompressionHookSlot, CompressionService};
@@ -23,7 +22,10 @@ use aagnet::plugins::slots::memory_saver::MemorySaverSlot;
 use aagnet::plugins::slots::react_loop::ReActLoopSlot;
 use aagnet::plugins::slots::tool_executor::ToolExecutorSlot;
 use aagnet::plugins::slots::tool_registry::ToolRegistrySlot;
+use aagnet::shared_types::llm::LlmConfig;
 
+use aagnet::plugins::slots::observation_sync::ObservationSyncSlot;
+use aagnet::plugins::slots::thought_sync::ThoughtSyncSlot;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 1. 通过 ConfigLoader 加载配置（严格模式——失败直接退出）
@@ -46,11 +48,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let memory_saver_slot = MemorySaverSlot::new();
 
     // 4. 注册到 Pipeline（通过 register_slot 自动 init() + add_slot）
-    let mut runtime = AgentRuntime::new_with_config(
-            Pipeline::with_recommended_phases(),
-            agent_config.clone(),
-        )
-        .with_llm_config(llm_config.clone());
+    let mut runtime =
+        AgentRuntime::new_with_config(Pipeline::with_recommended_phases(), agent_config.clone())
+            .with_llm_config(llm_config.clone());
 
     // 辅助函数：获取插件 JSON 配置段，缺失时返回空对象
     let plugin_cfg = |name: &str| -> serde_json::Value {
@@ -118,6 +118,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     runtime
         .register_slot(
+            Phase::think(),
+            Box::new(ThoughtSyncSlot::new()),
+            &PluginInitContext::new(
+                "thought_sync",
+                serde_json::json!({}),
+                agent_config.clone(),
+                PathBuf::from("./data/thought_sync"),
+            ),
+        )
+        .await
+        .map_err(|e| format!("ThoughtSyncSlot.init() 失败: {e}"))?;
+
+    runtime
+        .register_slot(
             Phase::audit(),
             Box::new(audit_slot),
             &PluginInitContext::new(
@@ -143,6 +157,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .await
         .map_err(|e| format!("ToolExecutorSlot.init() 失败: {e}"))?;
+
+    runtime
+        .register_slot(
+            Phase::execute(),
+            Box::new(ObservationSyncSlot::new()),
+            &PluginInitContext::new(
+                "observation_sync",
+                serde_json::json!({}),
+                agent_config.clone(),
+                PathBuf::from("./data/observation_sync"),
+            ),
+        )
+        .await
+        .map_err(|e| format!("ObservationSyncSlot.init() 失败: {e}"))?;
 
     runtime
         .register_slot(
@@ -253,7 +281,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .start(ap.clone())
         .await
         .map_err(|e| format!("CompressionService.start() 失败: {e}"))?;
-    compression.set_shared_store(runtime.shared_store().clone()).await;
+    compression
+        .set_shared_store(runtime.shared_store().clone())
+        .await;
 
     // 6. CompressionHookSlot —— Memorize 阶段钩子，在 MemorySaverSlot 之后触发压缩
     let event_tx = compression.event_sender();

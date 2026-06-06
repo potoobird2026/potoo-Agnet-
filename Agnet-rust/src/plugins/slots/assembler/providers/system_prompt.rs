@@ -165,7 +165,14 @@ fn replace_placeholders(content: &str, ap: &dyn SlotAccessPoint) -> String {
         .map(|entries| {
             entries
                 .iter()
-                .map(|e| format!("- {} [{}]: {}", e.summary, e.id, e.content.as_deref().unwrap_or_default()))
+                .map(|e| {
+                    format!(
+                        "- {} [{}]: {}",
+                        e.summary,
+                        e.id,
+                        e.content.as_deref().unwrap_or_default()
+                    )
+                })
                 .collect::<Vec<_>>()
                 .join("\n")
         })

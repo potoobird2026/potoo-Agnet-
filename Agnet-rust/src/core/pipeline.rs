@@ -1,16 +1,11 @@
-use std::collections::HashMap;
+﻿use std::collections::HashMap;
 
 use super::context::StepContext;
 use super::phase::Phase;
 use super::slot::{SlotDirective, SlotEntry, SlotPlugin};
 use super::types::error::AgentError;
 use super::types::Timestamp;
-use crate::shared_types::{
-    context::{
-        CONTEXT_ASSEMBLER_MESSAGES, CONTEXT_OBSERVATION, CONTEXT_THOUGHT,
-    },
-    ActionResult, ContentBlock, Message, MessageRole, Observation, StepResponse, Thought,
-};
+use crate::shared_types::StepResponse;
 
 /// Pipeline: an ordered list of phases, each containing Slots.
 /// The core makes no semantic assumptions, just iterates phases and Slots in order.
@@ -343,69 +338,6 @@ impl Pipeline {
                         }
                     }
                 }
-            }
-
-            // Post-phase: bridge slot outputs in ctx.data back to ctx.messages
-            match phase.as_str() {
-                "context" => {
-                    if let Some(assembled) =
-                        ctx.get_context::<Vec<Message>>(CONTEXT_ASSEMBLER_MESSAGES)
-                    {
-                        ctx.messages = assembled.clone();
-                    }
-                }
-                "think" => {
-                    if let Some(thought) = ctx.get_context::<Thought>(CONTEXT_THOUGHT) {
-                        let reasoning = match thought {
-                            Thought::Final { reasoning, .. } => reasoning.clone(),
-                            Thought::Action { reasoning, .. } => reasoning.clone(),
-                        };
-                        let msg = match thought {
-                            Thought::Final { answer, .. } => Message {
-                                role: MessageRole::Assistant,
-                                content: vec![ContentBlock::Text(answer.clone())],
-                                tool_calls: None,
-                                tool_call_id: None,
-                                reasoning: Some(reasoning),
-                                metadata: None,
-                                created_at: Timestamp::now(),
-                            },
-                            Thought::Action { action, .. } => Message {
-                                role: MessageRole::Assistant,
-                                content: vec![],
-                                tool_calls: action.tool_calls.clone(),
-                                tool_call_id: None,
-                                reasoning: Some(reasoning),
-                                metadata: None,
-                                created_at: Timestamp::now(),
-                            },
-                        };
-                        ctx.messages.push(msg);
-                    }
-                }
-                "execute" => {
-                    if let Some(obs_list) =
-                        ctx.get_context::<Vec<Observation>>(CONTEXT_OBSERVATION)
-                    {
-                        for obs in obs_list.clone() {
-                            let output = match &obs.result {
-                                ActionResult::Success { output, .. } => output.clone(),
-                                ActionResult::RetryableError { error } => error.clone(),
-                                ActionResult::FatalError { error } => error.clone(),
-                            };
-                            ctx.messages.push(Message {
-                                role: MessageRole::Tool,
-                                content: vec![ContentBlock::Text(output)],
-                                tool_calls: None,
-                                tool_call_id: obs.action.tool_call_id.clone(),
-                                reasoning: None,
-                                metadata: None,
-                                created_at: obs.completed_at,
-                            });
-                        }
-                    }
-                }
-                _ => {}
             }
 
             let phase_completed_at: Timestamp = Timestamp::now();

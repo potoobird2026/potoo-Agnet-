@@ -153,7 +153,10 @@
 |------|------|------|---------|
 | `vector_db` feature flag 未实现 | `docs/services/memory/memory开发文档.md` §6.3 承诺可选 | Cargo.toml 无 `[features]`，l3_vector 总是编译 | 本次集成任务一并补 |
 | Skills 文档的 `ContractRegistry` 与 Assembler 协议冲突 | `skills开发文档.md` §1.2 / §4.4.2 | Assembler 协议 §2 禁止新全局注册表 | 保留"ContractRegistry"作为服务内部命名，对外走 `PROVIDER_SKILLS` |
-| `McpToolProxy` 不实现 `ToolProvider` 而用"伪 TraitContract" | `mcp开发文档.md` §4.4 | `ToolContract` 在代码中不存在 | 改成实现已存在的 `ToolProvider` |
+| ~~`McpToolProxy` 不实现 `ToolProvider` 而用"伪 TraitContract"~~ | ~~`mcp开发文档.md` §4.4~~ | ✅ 已修复 | 已改为实现 `shared_types` 中的 `ToolProvider` |
+| **Pipeline 业务逻辑泄漏** | `protocol-Slot接入协议.md` §0 | ✅ 已修复 | "think"/"execute" hardcoded 代码已剥离到 `ThoughtSyncSlot` / `ObservationSyncSlot` |
+| **Arc::new(()) 假 Provider** | `protocol-Service集成协议.md` §2.2 | ✅ 已修复 | 所有 register_provider 使用真实实现 |
+| **K-R01 裸字符串违规** | `protocol-shared_types契约协议.md` §2.2 | ✅ 已修复 | llm_thinker_slot 使用 PROVIDER_SESSION_CONTEXT 常量 |
 
 ---
 
