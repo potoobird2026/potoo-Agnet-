@@ -6,7 +6,8 @@ pub fn parameters() -> serde_json::Value {
 }
 pub async fn execute(args: serde_json::Value) -> Result<serde_json::Value, String> {
     let path = args["path"].as_str().ok_or("缺少 path 参数")?;
-    std::fs::read_to_string(path)
-        .map(|s| serde_json::json!({"content": s}))
-        .map_err(|e| format!("读取失败: {}", e))
+    let content = tokio::fs::read_to_string(path)
+        .await
+        .map_err(|e| format!("读取失败: {}", e))?;
+    Ok(serde_json::json!({"content": content}))
 }

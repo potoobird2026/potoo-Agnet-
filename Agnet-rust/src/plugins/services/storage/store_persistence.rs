@@ -10,7 +10,6 @@
  * - 无界通道：PersistenceCommand 体积小（< 1KB），写入频率低，不会堆积
  */
 
-use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use tokio::sync::mpsc;
@@ -20,6 +19,8 @@ use crate::core::types::persistence::{PersistenceAck, PersistenceCommand};
 use crate::shared_types::Message;
 
 use super::storage::sessions_dir;
+
+use tokio::io::AsyncWriteExt;
 
 /// 会话文件名中允许的字符集（字母数字 + 连字符 + 下划线）
 fn sanitize_session_filename(session_id: &str) -> String {
@@ -67,7 +68,7 @@ impl PersistenceWorker {
     /// 启动后台持久化循环（阻塞当前任务直到 Shutdown 或 channel 关闭）
     pub async fn run(&mut self) {
         // 确保基础路径存在
-        if let Err(e) = std::fs::create_dir_all(&self.base_path) {
+        if let Err(e) = tokio::fs::create_dir_all(&self.base_path).await {
             tracing::error!(
                 "PersistenceWorker: 无法创建持久化目录 {}: {}",
                 self.base_path.display(),
@@ -83,7 +84,7 @@ impl PersistenceWorker {
                     messages,
                     ack_tx,
                 }) => {
-                    let result = self.save_session(&session_id, &messages);
+                    let result = self.save_session(&session_id, &messages).await;
                     if let Some(tx) = ack_tx {
                         let ack = match &result {
                             Ok(count) => PersistenceAck::Ok {
@@ -117,7 +118,7 @@ impl PersistenceWorker {
     }
 
     /// 保存单个会话：序列化 → 写入 .tmp → rename .json
-    fn save_session(&self, session_id: &str, messages: &[Message]) -> Result<usize, String> {
+    async fn save_session(&self, session_id: &str, messages: &[Message]) -> Result<usize, String> {
         let safe_name = sanitize_session_filename(session_id);
         if safe_name.is_empty() {
             return Err(format!(
@@ -134,30 +135,36 @@ impl PersistenceWorker {
             .map_err(|e| format!("序列化会话 '{}' 失败: {}", session_id, e))?;
 
         // 2. 写入临时文件
-        let mut f = std::fs::File::create(&tmp_path)
+        let mut f = tokio::fs::File::create(&tmp_path)
+            .await
             .map_err(|e| format!("创建临时文件 '{}' 失败: {}", tmp_path.display(), e))?;
 
         f.write_all(json.as_bytes())
+            .await
             .map_err(|e| format!("写入临时文件 '{}' 失败: {}", tmp_path.display(), e))?;
 
         // 确保数据刷入磁盘
         f.flush()
+            .await
             .map_err(|e| format!("刷新临时文件 '{}' 失败: {}", tmp_path.display(), e))?;
 
         // 3. 原子 rename（Windows 上目标文件存在时需先删除）
         if json_path.exists() {
-            std::fs::remove_file(&json_path)
+            tokio::fs::remove_file(&json_path)
+                .await
                 .map_err(|e| format!("删除旧文件 '{}' 失败: {}", json_path.display(), e))?;
         }
 
-        std::fs::rename(&tmp_path, &json_path).map_err(|e| {
-            format!(
-                "重命名 '{}' → '{}' 失败: {}",
-                tmp_path.display(),
-                json_path.display(),
-                e
-            )
-        })?;
+        tokio::fs::rename(&tmp_path, &json_path)
+            .await
+            .map_err(|e| {
+                format!(
+                    "重命名 '{}' → '{}' 失败: {}",
+                    tmp_path.display(),
+                    json_path.display(),
+                    e
+                )
+            })?;
 
         Ok(messages.len())
     }
@@ -183,9 +190,8 @@ pub async fn load_sessions_from_disk(
 
     let mut restored_count = 0;
 
-    let entries = std::fs::read_dir(base_path)?;
-    for entry in entries {
-        let entry = entry?;
+    let mut entries = tokio::fs::read_dir(base_path).await?;
+    while let Ok(Some(entry)) = entries.next_entry().await {
         let path = entry.path();
 
         // 仅处理 .json 文件，跳过 .tmp 文件
@@ -200,7 +206,7 @@ pub async fn load_sessions_from_disk(
             .unwrap_or("unknown")
             .to_string();
 
-        match std::fs::read_to_string(&path) {
+        match tokio::fs::read_to_string(&path).await {
             Ok(content) => match serde_json::from_str::<Vec<Message>>(&content) {
                 Ok(messages) => {
                     store.write(&session_id, messages).await;

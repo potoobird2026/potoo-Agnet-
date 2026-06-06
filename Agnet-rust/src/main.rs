@@ -308,13 +308,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         session_counter += 1;
         let session_id = format!("session-{}", session_counter);
         let mut input = String::new();
-        println!("[{}] 输入消息（空行退出）:", session_id);
+        tracing::info!("[{}] 输入消息（空行退出）:", session_id);
         std::io::stdin()
             .read_line(&mut input)
             .map_err(|e| format!("读取输入失败: {e}"))?;
         let trimmed = input.trim();
         if trimmed.is_empty() {
-            println!("退出。");
+            tracing::info!("退出。");
             break;
         }
 
@@ -325,7 +325,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // 提取回复内容
         let response = result.response();
-        println!("回应: {}", response);
+        tracing::info!("回应: {}", response);
     }
 
     Ok(())

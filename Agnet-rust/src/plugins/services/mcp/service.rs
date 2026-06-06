@@ -1,4 +1,4 @@
-/*! McpService —— MCP 连接服务（ServicePlugin 实现） */
+﻿/*! McpService —— MCP 连接服务（ServicePlugin 实现） */
 use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
@@ -121,7 +121,7 @@ impl ServicePlugin for McpService {
                 continue;
             }
             // B-6: 预检——可执行文件存在
-            if let Err(e) = std::fs::metadata(&server_config.command) {
+            if let Err(e) = tokio::fs::metadata(&server_config.command).await {
                 tracing::warn!(
                     "MCP: 跳过 Server '{}'，命令 '{}' 不可访问: {}",
                     server_config.name,
@@ -220,7 +220,7 @@ impl ServicePlugin for McpService {
                         if !server_config.enabled {
                             continue;
                         }
-                        if let Err(e) = std::fs::metadata(&server_config.command) {
+                        if let Err(e) = tokio::fs::metadata(&server_config.command).await {
                             tracing::warn!(
                                 "MCP Reload: 跳过 '{}'，命令不可访问: {}",
                                 server_config.name,

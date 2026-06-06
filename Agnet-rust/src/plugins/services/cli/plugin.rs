@@ -78,7 +78,7 @@ impl Default for CliChannel {
 #[async_trait]
 impl CliProvider for CliChannel {
     async fn output(&self, message: &str) -> Result<(), CliError> {
-        println!("{}", message);
+        tracing::info!("{}", message);
         Ok(())
     }
 

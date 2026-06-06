@@ -40,11 +40,11 @@ impl AssemblerConfig {
 /// 从文件读取模板内容（设计文档 §5.1，宪法 §7f：文件不存在时返回默认字符串）
 ///
 /// 遵循跨平台规范 §2.3：路径已由 resolve_paths 解析为绝对路径。
-pub fn load_template(path: &str, default: &str) -> String {
+pub async fn load_template(path: &str, default: &str) -> String {
     if path.is_empty() {
         return default.to_string();
     }
-    match std::fs::read_to_string(path) {
+    match tokio::fs::read_to_string(path).await {
         Ok(content) => {
             tracing::info!("{} 已加载模板: {}", LOG_PREFIX, path);
             content

@@ -1,0 +1,52 @@
+﻿--- a/src/plugins/services/storage/store_persistence.rs
++++ b/src/plugins/services/storage/store_persistence.rs
+@@ -1,7 +1,7 @@
+ /*!
+  * 会话持久化工作器
+  *
+- * PersistenceWorker：后台异步任务，通过 mpsc 通道接收 PersistenceCommand，
++ * PersistenceWorker：后台异步任务，通过 mpsc 通道接收 PersistenceCommand，
+  * 将 Session 消息序列化为 JSON 文件。
+  *
+  * 关键设计：
+@@ -10,8 +10,7 @@
+  * 无界通道：PersistenceCommand 体积小（< 1KB），写入频率低，不会堆积
+  */
+ 
+-use std::io::Write;
+-use std::path::{Path, PathBuf};
++use std::path::{Path, PathBuf};
+ 
+ use tokio::sync::mpsc;
+ 
+@@ -22,6 +21,7 @@ use crate::shared_types::Message;
+ 
+ use super::storage::sessions_dir;
+ 
++use tokio::io::AsyncWriteExt;
+ 
+ /// 会话文件名中允许的字符集（字母数字 + 连字符 + 下划线）
+ fn sanitize_session_filename(session_id: &str) -> String {
+@@ -137,11 +137,11 @@ impl PersistenceWorker {
+         let mut f = tokio::fs::File::create(&tmp_path).await
+             .map_err(|e| format!("创建临时文件 '{}' 失败: {}", tmp_path.display(), e))?;
+ 
+-        f.write_all(json.as_bytes())
++        f.write_all(json.as_bytes()).await
+             .map_err(|e| format!("写入临时文件 '{}' 失败: {}", tmp_path.display(), e))?;
+ 
+         // 确保数据刷入磁盘
+-        f.flush()
++        f.flush().await
+             .map_err(|e| format!("刷新临时文件 '{}' 失败: {}", tmp_path.display(), e))?;
+ 
+         // 3. 原子 rename（Windows 上目标文件存在时需先删除）
+@@ -184,7 +184,7 @@ pub async fn load_sessions_from_disk(
+     let mut restored_count = 0;
+ 
+     let entries = tokio::fs::read_dir(base_path).await?;
+-    while let Some(entry) = entries.next_entry().await {
++    while let Ok(Some(entry)) = entries.next_entry().await {
+         let entry = entry?;
+         let path = entry.path();
+ 

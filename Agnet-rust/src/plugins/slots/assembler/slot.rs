@@ -62,11 +62,12 @@ impl SlotPlugin for AssemblerSlot {
         let base_template = super::config::load_template(
             &config.base_prompt_path,
             "You are aagnet, an AI agent.\n\n{{rules}}\n\n<env>\n{{env_info}}\n</env>",
-        );
+        )
+        .await;
         let injection_template = super::config::load_template(
             &config.injection_layout_path,
             "## Agent Identity\n{{identity}}\n\n## Working Memory\n{{working_memory}}\n\n## Related Knowledge\n{{vector_memory}}",
-        );
+        ).await;
 
         let compactor = DocumentCompactor::new(config.compaction.clone());
         let rule_selector = if config.rule_pool.enabled {

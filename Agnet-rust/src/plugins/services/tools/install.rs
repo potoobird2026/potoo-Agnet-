@@ -14,10 +14,12 @@ impl ToolInstallManager {
     pub fn is_installed(&self, name: &str) -> bool {
         self.install_path(name).exists()
     }
-    pub fn uninstall(&self, name: &str) -> Result<(), String> {
+    pub async fn uninstall(&self, name: &str) -> Result<(), String> {
         let path = self.install_path(name);
         if path.exists() {
-            std::fs::remove_dir_all(&path).map_err(|e| format!("卸载失败: {}", e))?;
+            tokio::fs::remove_dir_all(&path)
+                .await
+                .map_err(|e| format!("卸载失败: {}", e))?;
         }
         Ok(())
     }

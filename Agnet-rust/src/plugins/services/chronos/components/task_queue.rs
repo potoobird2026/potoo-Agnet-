@@ -61,9 +61,12 @@ impl TaskQueueService for TaskQueueComponent {
         let json =
             serde_json::to_string_pretty(&*tasks).map_err(|e| format!("序列化失败: {}", e))?;
         if let Some(parent) = self.storage_config.task_queue_file.parent() {
-            std::fs::create_dir_all(parent).map_err(|e| format!("创建目录失败: {}", e))?;
+            tokio::fs::create_dir_all(parent)
+                .await
+                .map_err(|e| format!("创建目录失败: {}", e))?;
         }
-        std::fs::write(&self.storage_config.task_queue_file, json)
+        tokio::fs::write(&self.storage_config.task_queue_file, json)
+            .await
             .map_err(|e| format!("写入失败: {}", e))?;
         Ok(())
     }
@@ -71,7 +74,8 @@ impl TaskQueueService for TaskQueueComponent {
         if !self.storage_config.task_queue_file.exists() {
             return Ok(());
         }
-        let json = std::fs::read_to_string(&self.storage_config.task_queue_file)
+        let json = tokio::fs::read_to_string(&self.storage_config.task_queue_file)
+            .await
             .map_err(|e| format!("读取失败: {}", e))?;
         let loaded: Vec<ScheduledTask> =
             serde_json::from_str(&json).map_err(|e| format!("反序列化失败: {}", e))?;

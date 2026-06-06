@@ -64,7 +64,8 @@ impl ServicePlugin for MemoryService {
         config.validate()?;
 
         let workspace = config.workspace_dir.clone();
-        std::fs::create_dir_all(&workspace)
+        tokio::fs::create_dir_all(&workspace)
+            .await
             .map_err(|e| PluginError::InitFailed(format!("创建目录失败: {}", e)))?;
 
         let mut identity = IdentityManager::new(config.l1.clone(), &workspace);

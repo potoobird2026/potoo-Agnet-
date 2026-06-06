@@ -76,7 +76,7 @@ impl ServicePlugin for ToolsService {
 
         // 扫描已安装工具——ToolManifest → ToolDefinition 转换（registry.register 收 ToolDefinition）
         let discover = ToolDiscover::new(config.tools_dir.clone());
-        for manifest in discover.discover() {
+        for manifest in discover.discover().await {
             let def = ToolDefinition {
                 name: manifest.name,
                 description: manifest.description,
