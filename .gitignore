@@ -1,0 +1,3 @@
+# 杂散 IDE 和 AI 辅助文件夹——这些不属于 Agnet-rust 项目
+.claude/
+.vscode/

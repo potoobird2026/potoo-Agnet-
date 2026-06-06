@@ -1,0 +1,96 @@
+# aagnet CI 工作流
+#
+# 在每次 push 和 pull request 时自动运行：
+# - cargo check（编译检查）
+# - cargo test（单元测试）
+# - cargo clippy（lint 检查）
+#
+# 项目代码在 Agnet-rust/ 子目录下
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'Agnet-rust/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Agnet-rust/**'
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Agnet-rust
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Cache cargo dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: Agnet-rust
+
+      - name: cargo check
+        run: cargo check --workspace --all-targets
+
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Agnet-rust
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: Agnet-rust
+
+      - name: cargo test
+        run: cargo test --workspace
+
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Agnet-rust
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: Agnet-rust
+
+      - name: cargo build
+        run: cargo build --release
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aagnet-release
+          path: Agnet-rust/target/release/aagnet*

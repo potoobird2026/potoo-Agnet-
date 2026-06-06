@@ -1,0 +1,44 @@
+# ============================================================
+# aagnet 配置模板
+# 将本文件复制为 config.toml，填入你的 API key 等实际配置
+# config.toml 已被 .gitignore 排除，不会提交到版本控制
+# ============================================================
+
+[agent]
+name = "aagnet-agent"
+max_iterations = 10
+system_prompt = "你是一个智能助手，请根据要求完成任务。"
+
+[plugins]
+
+[plugins.llm]
+provider = "OpenAi"
+model = "gpt-4o-mini"
+base_url = "https://api.openai.com/v1"
+# 将下面替换为你的真实 API key
+api_key = "sk-your-real-api-key-here"
+max_tokens = 4096
+temperature = 0.7
+stream = false
+
+[plugins.tools]
+enabled = true
+
+[plugins.tool_registry]
+tools_dir = "./data/tools"
+
+[plugins.memory]
+[plugins.memory.l2]
+base_dir = "./data/memory/l2"
+
+[plugins.security]
+rules_file = "./data/security/rules.json"
+
+[plugins.compression]
+enabled = true
+
+[plugins.chronos]
+enabled = true
+
+[plugins.mcp]
+enabled = false

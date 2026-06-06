@@ -1,0 +1,17 @@
+/target
+**/*.rs.bk
+/build.ps1
+.env
+.env.local
+.env.*.local
+.idea
+.vscode
+.claude
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+/coverage
+
+# 配置文件（含 API key），使用 .example 模板
+/config/config.toml

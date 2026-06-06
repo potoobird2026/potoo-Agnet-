@@ -1,0 +1,11 @@
+# Clippy 配置
+# 注意：严格模式通过 `cargo clippy -- -D warnings` 实现，不在此配置
+
+# 限制函数复杂度（认知复杂度阈值）
+cognitive-complexity-threshold = 30
+
+# 限制函数参数数量
+too-many-arguments-threshold = 7
+
+# 限制类型复杂度
+type-complexity-threshold = 250

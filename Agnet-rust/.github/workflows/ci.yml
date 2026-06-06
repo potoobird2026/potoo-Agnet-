@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main, develop]
+  pull_request:
+    branches: [master, main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: clippy, rustfmt
+
+      - name: Format
+        run: cargo fmt --check
+
+      - name: Build
+        run: cargo build --verbose
+
+      - name: Build (all features)
+        run: cargo build --all-features --verbose
+
+      - name: Clippy
+        run: cargo clippy -- -D warnings
+
+      - name: Test
+        run: cargo test --verbose
+
+      - name: Test (all features)
+        run: cargo test --all-features --verbose
+
+      - name: Audit
+        run: cargo audit
+        continue-on-error: true
+
+      - name: Check cross-plugin isolation
+        shell: bash
+        run: |
+          violations=$(grep -rn "use crate::plugins::services::" src/plugins/ --include="*.rs" | grep -v "src/main.rs" | grep -v "use crate::plugins::services::[a-z_]*::\(" || true)
+          if [ -n "$violations" ]; then
+            echo "ERROR: Cross-plugin direct type imports found:"
+            echo "$violations"
+            echo "All cross-module dependencies must go through core/contract/ traits."
+            exit 1
+          fi
+          echo "PASS: No cross-plugin direct type imports found."
