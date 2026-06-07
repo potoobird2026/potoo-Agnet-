@@ -1,4 +1,4 @@
-//! OpenAI / OpenAI-compatible 执行器
+﻿//! OpenAI / OpenAI-compatible 执行器
 //!
 //! 设计文档 §4.3：HTTP POST /chat/completions 请求 + 响应解析。
 //! 支持：
@@ -373,6 +373,12 @@ fn parse_openai_response(body: &serde_json::Value, trace_id: &str) -> Result<Tho
             .collect();
 
         // design doc §3.6.2 step 5b: first tool_call → Action
+        if tool_calls.is_empty() {
+            return Err(LlmError::ParseError {
+                trace_id: trace_id.to_owned(),
+                raw_response: "finish_reason=tool_calls 但 tool_calls 数组为空".into(),
+            });
+        }
         let first = &tool_calls[0];
         let action = Action {
             tool_name: first.name.clone(),
