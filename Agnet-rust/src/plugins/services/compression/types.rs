@@ -1,4 +1,4 @@
-/*! Compression 公共类型 */
+﻿/*! Compression 公共类型 */
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
@@ -168,7 +168,7 @@ mod tests {
             token_saved: 50,
             success: true,
         };
-        let json = serde_json::to_string(&e).unwrap();
+        let json = serde_json::to_string(&e).expect("JournalEntry 序列化应成功");
         assert!(json.contains("\"session_id\":\"s\""));
     }
 }

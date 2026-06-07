@@ -1,4 +1,4 @@
-# Memory（三层记忆系统）开发文档
+﻿# Memory（三层记忆系统）开发文档
 
 ## 0. 协议依据
 
@@ -131,7 +131,7 @@ src/plugins/services/memory/
 | L2→L3 同步 | VectorSyncService 定期同步 | L3 | ✅ |
 | 向量 GC | CleanupService 清理低权重/过期向量 | L3 | ✅ |
 | 梦优化 | 定期 L2 合并+L1 更新+L3 GC | Dream | ✅ |
-| ServicePlugin | 完整生命周期 | ❌ 待补齐 | — |
+| ServicePlugin | 完整生命周期 | ✅ 已实现（含 init/start/handle_signal/stop/shutdown） | service.rs |
 
 ---
 
@@ -383,12 +383,12 @@ pub trait VectorStore: Send + Sync {
 
 | 方法 | 调用次数 | 用途 | 当前状态 |
 |------|---------|------|:---:|
-| `name()` | 多次 | 返回全局唯一服务标识 `"memory"` | ❌ 无 MemoryService |
-| `init(ctx)` | 1 | 初始化 L1/L2/L3 各层，建立文件目录结构 | ❌ |
-| `start(ap)` | 1 | `ap.register_provider("memory", ...)` + `ap.register_provider("vector", ...)` | ❌ |
-| `handle_signal(signal)` | 多次 | 响应运行时信号（见 5.1.2） | ❌ |
-| `stop()` | 多次 | 暂停写入，Provider 仍可读取 | ❌ |
-| `shutdown()` | 1 | 持久化状态 + 反注册 Provider | ❌ |
+| `name()` | 多次 | 返回全局唯一服务标识 "memory" | ✅ `service.rs` |
+| `init(ctx)` | 1 | 初始化 L1/L2/L3 各层，建立文件目录结构 | ✅ `service.rs` |
+| `start(ap)` | 1 | `ap.register_provider("memory", ...)` + `ap.register_provider("vector", ...)` | ✅ `service.rs` |
+| `handle_signal(signal)` | 多次 | 响应运行时信号（见 5.1.2） | ✅ `service.rs` |
+| `stop()` | 多次 | 暂停写入，Provider 仍可读取 | ✅ `service.rs` |
+| `shutdown()` | 1 | 持久化状态 + 反注册 Provider | ✅ `service.rs` |
 
 #### 5.1.2 运行时信号处理（协议 §3）
 
@@ -408,7 +408,7 @@ PluginLoader 读元数据 → 校验 provides/requires
 → init(ctx) → start(ap) ↔ [handle_signal() ...] → stop() → shutdown()
 ```
 
-当前状态：**全部未实现**。L1/L2/L3 管理器独立运行，无 MemoryService 外壳。
+当前状态：**全部已实现**。MemoryService (impl ServicePlugin) 管理 L1/L2/L3 生命周期，通过 register_provider 注册 memory/vector Provider。
 
 #### 5.1.3.1 计划声明（ServicePlugin 各方法职责与实现要点）
 
@@ -477,10 +477,10 @@ impl ServicePlugin for MemoryService {
 
 | 条款 | 要求 | 当前状态 | 差距 |
 |------|------|:---:|------|
-| §1 ServicePlugin | 需实现 `ServicePlugin` | ❌ | 无 MemoryService（详见 5.1.1） |
-| §2.1 ServiceAccessPoint | 通过 `get_config()` / `log()` 与 core 交互 | ❌ | 无 ServiceAccessPoint 注入 |
-| §2.2 register_provider() | 注册 `memory` + `vector` Provider | ❌ | 无 Provider 注册 |
-| §3 运行时信号 | 响应全部 6 个信号 | ❌ | 无 handle_signal()（详见 5.1.2） |
+| §1 ServicePlugin | 需实现 `ServicePlugin` | ✅ | `service.rs` 完整实现 |（详见 5.1.1） |
+| §2.1 ServiceAccessPoint | 通过 `get_config()` / `log()` 与 core 交互 | ✅ | `start(ap)` 接收 ServiceAccessPoint | |
+| §2.2 register_provider() | 注册 `memory` + `vector` Provider | ✅ | `start()` 中注册 PROVIDER_MEMORY + PROVIDER_VECTOR |
+| §3 运行时信号 | 响应全部 6 个信号 | ✅ | `handle_signal()` 在 service.rs 中实现 |（详见 5.1.2） |
 | §4 插件元数据 | YAML 声明 provides/requires/run_mode | ❌ | 元数据已设计（见 §7），未接入 PluginLoader |
 | §5 生命周期 | init → start → stop → shutdown | ❌ | 无完整生命周期（详见 5.1.3） |
 | §6 补充说明 | ServiceAccessPoint Clone、handle_signal<5s | ❌ | 待实现 |
@@ -913,3 +913,4 @@ impl WorkingMemoryManager {
     pub fn gc(&mut self);  // 触发遗忘扫描
 }
 ```
+

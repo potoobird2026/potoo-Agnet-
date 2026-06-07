@@ -1,4 +1,4 @@
-/*! SkillsService —— 技能注入服务 ServicePlugin
+﻿/*! SkillsService —— 技能注入服务 ServicePlugin
  *
  * Phase B 改动（B-1..B-7）：
  * - B-1: SkillConfig::resolve_paths 接收 data_dir
@@ -98,6 +98,7 @@ impl ServicePlugin for SkillsService {
         // B-1: 用 data_dir 锚定，不再用 current_dir
         config.resolve_paths(&ctx.data_dir);
         let skills = Self::scan_skills(&config.skills_dir).await;
+        let display_dir = config.skills_dir.clone();
         let shared_skills: SharedSkills =
             Arc::new(StdRwLock::new(skills.into_iter().map(Arc::new).collect()));
         let provider = SkillInjectionProvider::new(config.clone());
@@ -118,7 +119,7 @@ impl ServicePlugin for SkillsService {
         tracing::info!(
             "SkillsService: 初始化完成，加载了 {} 个技能（目录: {}）",
             count,
-            ctx.data_dir.display()
+            display_dir.display()
         );
         Ok(())
     }

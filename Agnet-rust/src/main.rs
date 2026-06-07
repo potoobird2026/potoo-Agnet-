@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+﻿use std::path::PathBuf;
+use tokio::io::AsyncBufReadExt;
 
 use aagnet::core::{
     AgentConfig, AgentRuntime, Phase, Pipeline, PluginInitContext, ServiceManager, ServicePlugin,
@@ -26,9 +27,18 @@ use aagnet::shared_types::llm::LlmConfig;
 
 use aagnet::plugins::slots::observation_sync::ObservationSyncSlot;
 use aagnet::plugins::slots::thought_sync::ThoughtSyncSlot;
+fn init_tracing() {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "info".into())
+        )
+        .init();
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 1. 通过 ConfigLoader 加载配置（严格模式——失败直接退出）
+    init_tracing();
     let config_loader = ConfigLoader::load(Some(PathBuf::from("config/config.toml")))
         .map_err(|e| format!("配置加载失败: {e}"))?;
 
@@ -309,8 +319,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let session_id = format!("session-{}", session_counter);
         let mut input = String::new();
         tracing::info!("[{}] 输入消息（空行退出）:", session_id);
-        std::io::stdin()
-            .read_line(&mut input)
+        tokio::io::BufReader::new(tokio::io::stdin())
+            .read_line(&mut input).await
             .map_err(|e| format!("读取输入失败: {e}"))?;
         let trimmed = input.trim();
         if trimmed.is_empty() {
@@ -330,3 +340,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+

@@ -1,4 +1,4 @@
-/*! MemoryService —— 三层记忆系统 ServicePlugin */
+﻿/*! MemoryService —— 三层记忆系统 ServicePlugin */
 use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -403,7 +403,7 @@ impl MemoryProvider for MemoryProviderImpl {
         let inner = guard
             .as_ref()
             .ok_or_else(|| MemoryError::ReadError("memory 未初始化".into()))?;
-        Ok(inner.identity.sections().is_empty())
+        Ok(inner.working_memory.active_files().is_empty())
     }
 
     async fn search_memory(

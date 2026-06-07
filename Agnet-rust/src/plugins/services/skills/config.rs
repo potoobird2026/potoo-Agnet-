@@ -1,4 +1,4 @@
-/*! Skills 配置 */
+﻿/*! Skills 配置 */
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -20,10 +20,7 @@ pub struct SkillConfig {
     pub enabled: bool,
 }
 fn default_skills_dir() -> PathBuf {
-    dirs::data_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join("potoobird")
-        .join("skills")
+    PathBuf::from(".")
 }
 fn default_budget() -> f64 {
     0.05

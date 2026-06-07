@@ -1,4 +1,4 @@
-/*! CliChannel —— 命令行输出通道（ServicePlugin 实现，仅输出，不再读 stdin） */
+﻿/*! CliChannel —— 命令行输出通道（ServicePlugin 实现，仅输出，不再读 stdin） */
 use async_trait::async_trait;
 use std::sync::Arc;
 
@@ -116,13 +116,13 @@ mod tests {
         assert!(!ch.running);
     }
 
-    #[test]
-    fn test_cli_provider_output() {
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        rt.block_on(async {
-            let mut ch = CliChannel::new();
-            ch.running = true;
-            assert!(ch.is_alive());
-        });
+    #[tokio::test]
+    async fn test_cli_provider_output() {
+
+
+        let mut ch = CliChannel::new();
+        ch.running = true;
+        assert!(ch.is_alive());
+
     }
 }

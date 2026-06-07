@@ -1,4 +1,4 @@
-# Tools（工具注册与执行服务）开发文档
+﻿# Tools（工具注册与执行服务）开发文档
 
 ## 0. 协议依据
 
@@ -96,8 +96,8 @@ src/plugins/services/tools/
 | 内置工具 | `read_file` / `write_file` / `execute_command` / `search_memory` | ✅ | `builtins/` |
 | 回退链 | 工具失败后自动切换到 `fallback_tool()` | ✅ | `registry.rs` |
 | 组件开关 | `ComponentSwitch` 按名禁用/启用工具 | ✅ | `registry.rs` |
-| ServicePlugin | 完整生命周期 | ❌ 待补齐 | — |
-| Provider 注册 | 通过 `ServiceAccessPoint::register_provider()` | ❌ 待补齐 | — |
+| ServicePlugin | 完整生命周期 | ✅ 已实现 | service.rs |
+| Provider 注册 | 通过 `ServiceAccessPoint::register_provider()` | ✅ 已注册 PROVIDER_TOOL | service.rs |
 
 ---
 
@@ -416,12 +416,12 @@ install_from_atp(atp_path)
 
 | 方法 | 调用次数 | 用途 | 当前状态 |
 |------|---------|------|:---:|
-| `name()` | 多次 | 返回全局唯一服务标识 `"tools"` | ❌ 无 ToolsService |
-| `init(ctx)` | 1 | 加载内置工具 + ToolDiscover 扫描已安装工具包 | ❌ |
+| `name()` | 多次 | 返回全局唯一服务标识 "tools" | ✅ `service.rs` |
+| `init(ctx)` | 1 | 加载内置工具 + ToolDiscover 扫描已安装工具包 | ✅ `service.rs` |
 | `start(ap)` | 1 | `ap.register_provider("tool", ToolRegistry)` | ❌ |
 | `handle_signal(signal)` | 多次 | 响应运行时信号（见 5.1.2） | ❌ |
 | `stop()` | 多次 | 暂停工具注册，已注册工具仍可用 | ❌ |
-| `shutdown()` | 1 | 反注册 Provider + 清理 CircuitBreaker 状态 | ❌ |
+| `shutdown()` | 1 | 反注册 Provider + 清理 CircuitBreaker 状态 | ✅ `service.rs` |
 
 #### 5.1.2 运行时信号处理（协议 §3）
 
@@ -441,7 +441,7 @@ PluginLoader 读元数据 → 校验 provides/requires
 → init(ctx) → start(ap) ↔ [handle_signal() ...] → stop() → shutdown()
 ```
 
-当前状态：**全部未实现**。`ToolRegistry` / `CircuitBreaker` / `NativePlatform` 等作为独立组件存在。
+当前状态：**全部已实现**。ToolsService (impl ServicePlugin) 管理 ToolRegistry/CircuitBreaker/NativePlatform 等组件完整生命周期。
 
 #### 5.1.3.1 计划声明（ServicePlugin 各方法职责与实现要点）
 
@@ -955,3 +955,4 @@ impl NativePlatform {
         -> Result<ToolOutput, ToolError>;
 }
 ```
+
