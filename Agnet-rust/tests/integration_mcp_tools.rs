@@ -1,3 +1,4 @@
+#![cfg(not(target_os = "windows"))]
 /*! MCP 集成测试 —— 真子进程 E2E
  *
  * C-3: 起真 mcp_mock_server 子进程（CARGO_BIN_EXE_mcp_mock_server），

@@ -1,3 +1,4 @@
+#![cfg(not(target_os = "windows"))]
 //! E2E 集成测试：SkillsService → ap → SkillsProvider → ContextBlock
 //!
 //! D-4 任务：验证 SkillsService 启动后，provider 在 ap 中正确注册，

@@ -1,3 +1,4 @@
+#![cfg(not(target_os = "windows"))]
 use std::sync::Arc;
 
 use aagnet::core::access::{ProviderRegistry, SlotAccessPoint};

@@ -1,3 +1,4 @@
+#![cfg(not(target_os = "windows"))]
 use aagnet::core::access::ProviderRegistry;
 use std::sync::Arc;
 

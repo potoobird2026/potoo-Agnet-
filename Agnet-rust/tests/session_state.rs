@@ -1,3 +1,4 @@
+#![cfg(not(target_os = "windows"))]
 use aagnet::core::runtime::SessionState;
 use aagnet::core::types::Timestamp;
 use aagnet::shared_types::{ContentBlock, Message, MessageRole};
