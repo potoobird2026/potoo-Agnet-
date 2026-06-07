@@ -1,4 +1,4 @@
-﻿use std::path::PathBuf;
+use std::path::PathBuf;
 use tokio::io::AsyncBufReadExt;
 
 use aagnet::core::{
@@ -312,33 +312,82 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .map_err(|e| format!("CompressionHookSlot.init() 失败: {e}"))?;
 
-    // 7. 交互循环
-    let mut session_counter = 0u64;
+    // 7. 交互循环——默认复用同一个会话，支持 :new 新建会话
+    const DEFAULT_SESSION_ID: &str = "default";
+    let mut current_session = DEFAULT_SESSION_ID.to_string();
+    let mut session_list: Vec<String> = vec![DEFAULT_SESSION_ID.to_string()];
+    
+    // 打印帮助信息
+    tracing::info!("交互模式已启动。输入消息与 AI 对话。");
+    tracing::info!("  :new         — 新建会话");
+    tracing::info!("  :list        — 列出所有会话");
+    tracing::info!("  :switch <id> — 切换到指定会话");
+    tracing::info!("  :help        — 显示帮助");
+    tracing::info!("  空行          — 退出");
+    
     loop {
-        session_counter += 1;
-        let session_id = format!("session-{}", session_counter);
+        tracing::info!("[{}] 输入消息（空行退出）:", current_session);
         let mut input = String::new();
-        tracing::info!("[{}] 输入消息（空行退出）:", session_id);
         tokio::io::BufReader::new(tokio::io::stdin())
             .read_line(&mut input).await
             .map_err(|e| format!("读取输入失败: {e}"))?;
-        let trimmed = input.trim();
+        let trimmed = input.trim().to_string();
         if trimmed.is_empty() {
             tracing::info!("退出。");
             break;
         }
 
+        // 处理元命令
+        if trimmed.starts_with(':') {
+            match trimmed.as_str() {
+                ":new" => {
+                    let new_id = format!("session-{}", session_list.len() + 1);
+                    current_session = new_id.clone();
+                    session_list.push(new_id);
+                    tracing::info!("已切换到新会话 [{}]", current_session);
+                    continue;
+                }
+                ":list" => {
+                    tracing::info!("当前会话列表:");
+                    for s in &session_list {
+                        let marker = if s == &current_session { " ← 当前" } else { "" };
+                        tracing::info!("  - {}{}", s, marker);
+                    }
+                    continue;
+                }
+                ":help" => {
+                    tracing::info!("  :new         — 新建会话");
+                    tracing::info!("  :list        — 列出所有会话");
+                    tracing::info!("  :switch <id> — 切换到指定会话");
+                    tracing::info!("  :help        — 显示帮助");
+                    tracing::info!("  空行          — 退出");
+                    continue;
+                }
+                cmd if cmd.starts_with(":switch ") => {
+                    let target = cmd[8..].trim().to_string();
+                    if session_list.contains(&target) {
+                        current_session = target;
+                        tracing::info!("已切换到会话 [{}]", current_session);
+                    } else {
+                        tracing::warn!("会话 '{}' 不存在。使用 :list 查看可用会话", target);
+                    }
+                    continue;
+                }
+                _ => {
+                    tracing::warn!("未知命令: {}. 输入 :help 查看帮助", trimmed);
+                    continue;
+                }
+            }
+        }
+
         let result = runtime
-            .step(StepInput::new(&session_id, trimmed))
+            .step(StepInput::new(&current_session, &trimmed))
             .await
             .map_err(|e| format!("step 执行失败: {e}"))?;
 
-        // 提取回复内容
         let response = result.response();
-        tracing::info!("回应: {}", response);
+        tracing::info!("{}", response);
     }
 
     Ok(())
 }
-
-
