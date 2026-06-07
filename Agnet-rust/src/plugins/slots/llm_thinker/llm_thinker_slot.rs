@@ -1,4 +1,4 @@
-//! LlmThinkerSlot（精简版）
+﻿//! LlmThinkerSlot（精简版）
 //!
 //! 设计文档 §5：精简后的 SlotPlugin，只负责 Pipeline 编排：
 //! 读上下文 → 调 LlmService（通过 provider_raw）→ 处理流 → 写回 Thought
